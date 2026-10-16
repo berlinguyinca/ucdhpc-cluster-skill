@@ -14,11 +14,17 @@
 #   UCDHPC_SKILL_REPO  override the git URL (default: the GitHub repo).
 #
 # Examples:
-#   # Running pi directly ON a cluster login node where the skill is missing:
+#   # Running a harness directly ON a cluster login node where the skill is missing:
 #   bash ~/.ucdhpc-cluster-skill/ucd-hpc/scripts/ensure-remote.sh
 #
-#   # Running pi on a laptop, reaching the cluster over ssh:
+#   # Running a harness on a laptop, reaching the cluster over ssh:
 #   ./scripts/ensure-remote.sh hive
+#
+# Installs the skill into every harness skill directory:
+#   ~/.agents/skills/ucd-hpc            (pi, and opencode's shared scan)
+#   ~/.config/opencode/skill/ucd-hpc    (opencode)
+#   ~/.claude/skills/ucd-hpc            (Claude Code)
+#   ~/.codex/skills/ucd-hpc             (OpenAI Codex)
 #
 set -euo pipefail
 
@@ -46,7 +52,8 @@ install_on_host() {
   local clone_dir="$HOME/.ucdhpc-cluster-skill"
   local src
 
-  mkdir -p "$HOME/.agents/skills" "$HOME/.config/opencode/skill"
+  mkdir -p "$HOME/.agents/skills" "$HOME/.config/opencode/skill" \
+    "$HOME/.claude/skills" "$HOME/.codex/skills"
 
   # Clone once if not present.
   if [ ! -d "$clone_dir/.git" ]; then
@@ -65,11 +72,15 @@ install_on_host() {
 
   link_skill "$src" "$HOME/.agents/skills/ucd-hpc"
   link_skill "$src" "$HOME/.config/opencode/skill/ucd-hpc"
+  link_skill "$src" "$HOME/.claude/skills/ucd-hpc"
+  link_skill "$src" "$HOME/.codex/skills/ucd-hpc"
   chmod +x "$src"/scripts/*.sh 2>/dev/null || true
 
   echo "[ensure-remote] ucd-hpc skill ensured on $(hostname 2>/dev/null || echo localhost):"
-  echo "  $HOME/.agents/skills/ucd-hpc          -> $src"
-  echo "  $HOME/.config/opencode/skill/ucd-hpc  -> $src"
+  echo "  pi       $HOME/.agents/skills/ucd-hpc          -> $src"
+  echo "  opencode $HOME/.config/opencode/skill/ucd-hpc  -> $src"
+  echo "  claude   $HOME/.claude/skills/ucd-hpc          -> $src"
+  echo "  codex    $HOME/.codex/skills/ucd-hpc           -> $src"
 }
 
 if [ "$#" -gt 0 ]; then
