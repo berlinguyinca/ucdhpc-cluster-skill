@@ -1,5 +1,8 @@
 # Farm
 
+> Per-cluster facts (partitions, limits, GPUs, storage paths) are maintained in `../clusters.yml`
+> (render: `scripts/show-cluster.sh farm`) and are authoritative; this file is the narrative supplement.
+
 CA&ES condo cluster; PIs from any college can buy in. Docs: <https://docs.hpc.ucdavis.edu/farm/>.
 Support: `farm-hpc@ucdavis.edu`.
 
