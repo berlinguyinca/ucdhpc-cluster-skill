@@ -1,14 +1,14 @@
-# ucd-hpc — a Claude skill for UC Davis HPC users
+# ucd-hpc — an agent skill for UC Davis HPC users
 
-A [Claude Code skill](https://docs.anthropic.com/en/docs/claude-code/skills) that teaches Claude how the
-UC Davis HPC@UCD clusters (**Farm**, **Franklin**, **Hive**) actually work: which partitions and
-accounts a user has, the free-tier limits, how to request CPUs/memory/GPUs/time, why jobs fail or
-sit pending, where software lives (modules, conda, Apptainer, Open OnDemand), and how storage and
-data transfer work.
+A skill (Agent Skills spec) that teaches an AI coding agent how the UC Davis HPC@UCD clusters
+(**Farm**, **Franklin**, **Hive**) actually work: which partitions and accounts a user has, the
+free-tier limits, how to request CPUs/memory/GPUs/time, why jobs fail or sit pending, where
+software lives (modules, conda, Apptainer, Open OnDemand), and how storage and data transfer work.
 
-The skill is `ucd-hpc/`. It bundles:
+The skill is harness-neutral — it works in Claude Code, pi, and opencode (all three implement the
+same Agent Skills spec). It is `ucd-hpc/` and bundles:
 
-- `SKILL.md` — the workflow Claude follows (identify cluster → probe live → read references → verify).
+- `SKILL.md` — the workflow the agent follows (identify cluster → probe live → read references → verify).
 - `references/` — distilled, verified facts: shared Slurm behavior, debugging tables, software,
   storage, and one file per cluster (`hive.md`, `farm.md`, `franklin.md`).
 - `scripts/cluster-context.sh` — read-only snapshot of the user's accounts, QOS limits, partitions,
@@ -18,14 +18,28 @@ The skill is `ucd-hpc/`. It bundles:
 
 ## Install
 
+Clone once, then symlink (or copy) `ucd-hpc/` into the skill directory of the harness you use.
+
 ```bash
-git clone https://github.com/ucdavis/ucdhpc-cluster-skill ~/ucdhpc-cluster-skill   # or wherever
+git clone https://github.com/berlinguyinca/ucdhpc-cluster-skill ~/ucdhpc-cluster-skill
+cd ~/ucdhpc-cluster-skill
+
+# Claude Code
 mkdir -p ~/.claude/skills
-ln -s ~/ucdhpc-cluster-skill/ucd-hpc ~/.claude/skills/ucd-hpc
+ln -s "$PWD/ucd-hpc" ~/.claude/skills/ucd-hpc
+
+# pi
+mkdir -p ~/.agents/skills
+ln -s "$PWD/ucd-hpc" ~/.agents/skills/ucd-hpc
+
+# opencode (global skills dir)
+mkdir -p ~/.config/opencode/skill
+ln -s "$PWD/ucd-hpc" ~/.config/opencode/skill/ucd-hpc
 ```
 
-Works best when Claude Code runs on a cluster login node (live probes), but the references
-also let it help from a laptop.
+After installing, run `/reload` in an active pi session (or restart opencode) so the harness
+re-scans and advertises the skill. Works best when the agent runs on a cluster login node (live
+probes), but the references also let it help from a laptop.
 
 ## Sources
 
