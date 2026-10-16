@@ -21,6 +21,32 @@ implement the same Agent Skills spec (a directory containing `SKILL.md`). The he
 to any agent harness. Run the scripts from this skill directory (resolve the paths relative to
 wherever `SKILL.md` lives).
 
+## Working over SSH
+
+The harness usually runs on your laptop and reaches the cluster by `ssh` (e.g. `ssh hive` as the
+cluster account). This skill is then loaded from the **local** skill directory, but every probe and
+Slurm command in it must execute on the **cluster login node**, never on your laptop. Two ways to
+do that:
+
+- **Skill installed on the login node** (recommended; mirror `~/.agents/skills/ucd-hpc` and
+  `~/.config/opencode/skill/ucd-hpc` over via `rsync`, or clone + symlink). Then run the read-only
+  probes remotely by their canonical path:
+  ```bash
+  ssh hive bash ~/.agents/skills/ucd-hpc/scripts/cluster-context.sh
+  ssh hive bash ~/.agents/skills/ucd-hpc/scripts/lint-jobscript.sh "$HOME/job.sh"   # file must be on the login node
+  ssh hive bash ~/.agents/skills/ucd-hpc/scripts/job-postmortem.sh "$JOBID"
+  ```
+- **No remote install yet** — pipe a local copy of a script over stdin (works for the self-contained
+  `cluster-context.sh`; `$SKILL_DIR` is the directory holding this `SKILL.md`):
+  ```bash
+  ssh hive 'bash -s' < "$SKILL_DIR/scripts/cluster-context.sh"
+  ```
+  Or, once the login node has `git`: `ssh hive 'git clone https://github.com/berlinguyinca/ucdhpc-cluster-skill ~/ucdhpc-cluster-skill'` and reference `~/ucdhpc-cluster-skill/ucd-hpc/scripts/...`.
+
+Read the `references/<cluster>.md` files locally as usual. Never run a probe on your laptop and
+report its output as cluster state. If you cannot reach the cluster by `ssh`, say so and ask the
+user to paste `sacctmgr show assoc user=$USER format=account%20,partition%20,qos%40`.
+
 ## Login-node discipline
 
 You are on a shared login node, not a workstation. Ordinary users are capped per user at
