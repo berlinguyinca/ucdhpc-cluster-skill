@@ -24,6 +24,24 @@ set -euo pipefail
 
 REPO="${UCDHPC_SKILL_REPO:-https://github.com/berlinguyinca/ucdhpc-cluster-skill}"
 
+# Create (or refresh) a symlink at $dest pointing at $src. If $dest is currently
+# a real directory left over from an old rsync/cp install, replace it with a
+# symlink -- but only when it looks like a skill copy (contains SKILL.md), to
+# avoid ever deleting a directory we do not own.
+link_skill() {
+  local src="$1" dest="$2"
+  if [ -d "$dest" ] && [ ! -L "$dest" ]; then
+    if [ -f "$dest/SKILL.md" ]; then
+      echo "[ensure-remote] replacing stale copy at $dest with a symlink"
+      rm -rf "$dest"
+    else
+      echo "[ensure-remote] WARNING: $dest is a directory without SKILL.md; leaving it." >&2
+      return 0
+    fi
+  fi
+  ln -sfn "$src" "$dest"
+}
+
 install_on_host() {
   local clone_dir="$HOME/.ucdhpc-cluster-skill"
   local src
@@ -45,8 +63,8 @@ install_on_host() {
     echo "[ensure-remote] WARNING: $src/SKILL.md missing; clone may be stale." >&2
   fi
 
-  ln -sfn "$src" "$HOME/.agents/skills/ucd-hpc"
-  ln -sfn "$src" "$HOME/.config/opencode/skill/ucd-hpc"
+  link_skill "$src" "$HOME/.agents/skills/ucd-hpc"
+  link_skill "$src" "$HOME/.config/opencode/skill/ucd-hpc"
   chmod +x "$src"/scripts/*.sh 2>/dev/null || true
 
   echo "[ensure-remote] ucd-hpc skill ensured on $(hostname 2>/dev/null || echo localhost):"
