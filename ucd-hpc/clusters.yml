@@ -1,0 +1,261 @@
+# clusters.yml — per-cluster configuration for the ucd-hpc skill.
+#
+# This is the single source of truth for cluster-specific facts (partitions,
+# limits, GPUs, storage, software). SKILL.md and the reference files defer to it.
+# To add a cluster, copy an existing `- name:` block and edit it — you do NOT
+# need to touch SKILL.md or the narrative references to onboard a new cluster.
+#
+# Render it:
+#   scripts/show-cluster.sh            # list clusters
+#   scripts/show-cluster.sh hive       # print the hive block
+#
+# Facts are as of 2026-09 and MUST be re-verified with live tools before any
+# submission (sinfo, scontrol, sacctmgr, scripts/cluster-context.sh). DefaultTime
+# is unset on every partition on every cluster — always pass --time.
+
+clusters:
+  - name: hive
+    aliases: [hive.hpc.ucdavis.edu, hive]
+    login:
+      host: hive.hpc.ucdavis.edu
+      auth: [ssh-key, campus-passphrase]          # SSH key OR campus passphrase
+      cluster_name_conf: hive
+    kind: centrally-managed-campus                # open to all UC Davis staff/faculty/grad students
+    docs: https://docs.hpc.ucdavis.edu/hive/
+    ondemand: https://ondemand.hive.hpc.ucdavis.edu
+    support_email: hpc-help@ucdavis.edu
+    accounts_url: https://hippo.ucdavis.edu/Hive
+    default_time: unset
+    free_tier:
+      account: publicgrp
+      note: "HPC@UCD Sponsored Public Access (publicgrp); PI groups buy CPU/GPU/TB"
+      high:
+        per_job: {cpus: 8, memory_gb: 128, gpus: 1, time: 30d}
+        pool: {cpus: 128, memory_gb: 2000, gpus: 5}
+      low:
+        note: "no per-job caps; everything idle; preemptible"
+        time: 7d
+      over_per_job_caps_fail: [QOSMaxCpuPerJobLimit, QOSMaxMemoryPerJob, QOSMaxGRESPerJob, "Requested time limit is invalid"]
+      pool_full_pends: QOSGrp*
+      gpu_note: "free-tier GPU in high may be an A6000 OR an RTX PRO 6000 Blackwell (needs CUDA >= 12.8)"
+    partitions:
+      - name: high
+        max_time: 30d
+        default_mem_per_cpu: 4000M
+        preempt: none
+        contents: "~150 CPU nodes + 12 general A6000/Blackwell GPUs; purchased shares and the free tier"
+      - name: low
+        max_time: 7d
+        default_mem_per_cpu: 4000M
+        preempt: "REQUEUE, 130s grace"
+        contents: "all nodes and every GPU (86) when idle; free for everyone"
+      - name: gpu-a100
+        max_time: 30d
+        default_mem_per_cpu: 8000M
+        preempt: none
+        contents: "9 nodes, 44 A100 80 GB; owning groups"
+      - name: gpu-a6000
+        max_time: 30d
+        default_mem_per_cpu: 16000M
+        preempt: none
+        contents: "1 node x 4 A6000"
+      - name: gpu-6000-blackwell
+        max_time: 30d
+        default_mem_per_cpu: 16000M
+        preempt: none
+        contents: "4 nodes x 14 RTX PRO 6000 Blackwell"
+      - name: gpu-a100-40gb
+        max_time: 30d
+        default_mem_per_cpu: 2000M
+        preempt: none
+        contents: "1 node"
+      - name: gpu-5000-ada
+        max_time: 30d
+        default_mem_per_cpu: 2000M
+        preempt: none
+        contents: "1 node"
+      - name: gpu-l40s
+        max_time: 30d
+        default_mem_per_cpu: 2000M
+        preempt: none
+        contents: "1 node"
+      - name: gpu-h100
+        max_time: 30d
+        preempt: none
+        contents: "one group's H100 nodes (also via low)"
+      - name: hpccf
+        preempt: none
+        contents: "staff; ignore"
+      - name: burnin
+        preempt: none
+        contents: "staff; ignore"
+    gpu_types:
+      - {name: a6000, partitions: [high, low, gpu-a6000]}
+      - {name: 6000_blackwell, partitions: [high, low, gpu-6000-blackwell]}
+      - {name: a100, partitions: [low, gpu-a100], note: "some nodes typed nvidia_a100-sxm4-80gb / nvidia_a100_80gb_pcie; match only --gpus=1 plus the partition"}
+      - {name: l40s, partitions: [low]}
+      - {name: 5000_ada, partitions: [low]}
+    cpu_features: [zen, zen2, zen3, zen4, zen5, icelake]
+    rules:
+      - "Group storage is all Quobyte (/quobyte/<pi>grp): unique --output/--error per writer (%j, %A_%a, %N) is mandatory."
+      - "Never --exclusive: it does not schedule and shows a bogus QOSGrpCpuLimit."
+      - "MPI: --ntasks=N, --nodes=1-4, --constraint='(zen2|zen3|zen4)', --distribution=block,pack, --switches=1@1-00; MPI-IO in /nfs/hive/scratch-mpi-io/<jobid>/ after joining mpi-io-grp."
+      - "high normally starts within minutes; otherwise the group pool is full (QOSGrp*), the request needs a large contiguous chunk, or a maintenance reservation is pending."
+    storage:
+      home: {quota: 20GB, backup: nightly, restore: /quobyte/backups/bin/restore.sh}
+      group: "/quobyte/<pi>grp (all Quobyte; one-writer rule; qinfo quota; backups only for BACKED-UP/ if bought)"
+      per_job_tmp: "/tmp and /scratch (~1.6 TB local, $TMPDIR=/tmp, wiped at exit)"
+      shared_scratch: "/nfs/hive/scratch (persists, not purged, not backed up, clean up yourself)"
+      legacy: "/nfs/peloton/waltz (legacy Peloton); LSSC0 migrated into /quobyte/<pi>grp"
+    software:
+      tree: "full CVMFS (module avail: core, lang, general; conda/*, R/*; matlab, fsl, phenix)"
+      loaded_at_login: [slurm, openmpi/5.0.5]
+      extra_trees: ["module load dev (pre-release)", "module load zen2 (AMD-optimized)"]
+      apptainer: true
+      ondemand_apps: [JupyterLab, RStudio, VS Code, desktop]
+
+  - name: farm
+    aliases: [farm.hpc.ucdavis.edu, farm]
+    login:
+      host: farm.hpc.ucdavis.edu
+      auth: [ssh-key]                             # SSH key only
+      cluster_name_conf: farm
+    kind: condo                                   # CA&ES condo cluster; PIs from any college buy in
+    docs: https://docs.hpc.ucdavis.edu/farm/
+    ondemand: https://ondemand.farm.hpc.ucdavis.edu
+    support_email: farm-hpc@ucdavis.edu
+    accounts_url: https://hippo.ucdavis.edu/Farm
+    default_time: unset
+    free_tier:
+      account: publicgrp
+      note: "CA&ES free tier (publicgrp) grants low ONLY; publicgrp + high is 'Invalid account or account/partition combination'"
+      low_only: true
+    partitions:
+      - name: low
+        max_time: 7d
+        default_mem_per_cpu: 2000M
+        preempt: REQUEUE
+        contents: "~98 nodes: all parallel + bigmem + every GPU node when idle; free for everyone"
+      - name: high
+        max_time: 150d
+        default_mem_per_cpu: 2000M
+        preempt: none
+        contents: "~66 parallel nodes (64 CPU/256 GB class, newer 128-CPU); purchased"
+      - name: bml
+        max_time: 7d
+        default_mem_per_cpu: 4096M
+        preempt: REQUEUE
+        contents: "22 bigmem nodes (up to 128 CPU / 2 TB); scavenger"
+      - name: bmh
+        max_time: 150d
+        default_mem_per_cpu: 4096M
+        preempt: none
+        contents: "22 bigmem nodes; purchased"
+      - name: bgpu
+        max_time: 150d
+        default_mem_per_cpu: 3072M
+        preempt: none
+        contents: "2 nodes: a5500:4, v100:1"
+      - name: gpuh
+        max_time: 7d
+        default_mem_per_cpu: 15360M
+        preempt: none
+        contents: "2 titan nodes; high priority"
+      - name: gpum
+        max_time: 7d
+        default_mem_per_cpu: 15360M
+        preempt: none
+        contents: "2 titan nodes; medium priority"
+      - name: gpu-a100-h
+        max_time: 34d
+        default_mem_per_cpu: 7168M
+        preempt: none
+        contents: "3 nodes (a100 x4 and x8), MaxNodes=1"
+      - name: gpu-6000_ada-h
+        max_time: 30d
+        default_mem_per_cpu: 12000M
+        preempt: none
+        contents: "2 nodes 6000_ada:4"
+      - name: gpu-h100-h
+        max_time: 30d
+        default_mem_per_cpu: 4000M
+        preempt: none
+        contents: "1 node h100:4"
+    naming: "-h = owner priority, -m/gpum = medium, l = scavenger"
+    gpu_types:
+      - {name: a100, partitions: [low]}
+      - {name: h100, partitions: [low]}
+      - {name: 6000_ada, partitions: [low]}
+      - {name: a5500, partitions: [low]}
+      - {name: v100, partitions: [low]}
+      - {name: titan, partitions: [low]}
+    cpu_features: [cpu, bm, gpu, "gpu:a100,nvlink:4", "gpu:h100,nvlink:4", "gpu:6000ada", "gpu:a5500,bgpu", "gpu:v100,bgpu", "gpu:titan"]
+    rules:
+      - "Free tier's only GPU route is --partition=low (preemptible); owners use the *-h, bgpu, gpuh partitions."
+      - "Login prints an expired-storage warning: data on hardware past five years is unsupported and not backed up."
+    storage:
+      home: {quota: 20GB, backup: none}
+      group: "/group/<pi>grp (NFS; ls /group shows only mounted shares — cd into yours by name) or /quobyte/<pi>grp for newer purchases (one-writer rule, qinfo quota)"
+      note: "several /group shares run near 100% — df -h before large writes"
+      per_job_tmp: "/tmp and /scratch (~1.8 TB local, $TMPDIR=/tmp, deleted at job end)"
+      backup_note: "Nothing on Farm is backed up; users arrange their own copies. Globus: 'UC Davis Farm home'; PI shares on request at /group/<pi>grp/globus-write/<login>/"
+    software:
+      tree: "same CVMFS module tree and central conda as Hive (module avail, module load conda, conda/*, R/*, matlab)"
+      loaded_at_login: [slurm, openmpi/5.0.5]
+      apptainer: true
+      ondemand_apps: [JupyterLab, RStudio, VS Code]
+
+  - name: franklin
+    aliases: [franklin.hpc.ucdavis.edu, franklin]
+    login:
+      host: franklin.hpc.ucdavis.edu
+      auth: [ssh-key]                             # SSH key only; -Y for the Relion GUI
+      cluster_name_conf: franklin
+    kind: college                                   # College of Biological Sciences: CNS, MMG, MCB, cryo-EM
+    docs: https://docs.hpc.ucdavis.edu/franklin/
+    ondemand: https://ondemand.franklin.hpc.ucdavis.edu
+    support_email: hpc-help@ucdavis.edu
+    accounts_url: https://hippo.ucdavis.edu/Franklin
+    default_time: unset
+    free_tier:
+      note: "NO free tier; every user is sponsored by a PI or department; low arrives through department QOS such as mcbdept-low-qos"
+    partitions:
+      - name: low
+        max_time: 14d
+        default_mem_per_cpu: 2000M
+        preempt: "REQUEUE, 60s grace"
+        is_default: true
+        contents: "all 16 nodes (7 CPU + 9 GPU) when idle"
+      - name: high
+        max_time: 60d
+        default_mem_per_cpu: 2000M
+        preempt: none
+        contents: "7 CPU nodes, 256 logical CPUs / 1 TB each"
+      - name: "<group>-gpu"
+        max_time: unlimited
+        preempt: none
+        contents: "the owning group's GPU node, 7-8 GPUs (jawdatgrp-gpu, jalettsgrp-gpu, mmgdept-gpu, mcbdept-gpu, cashjngrp-gpu, mmaldogrp-gpu, cnsdept-gpu, ajfishergrp-gpu)"
+    gpu_types:
+      - {name: untyped, note: "gpu:8, so --gpus=N only; pick the node class by CPU feature", partitions: [low, "<group>-gpu"]}
+    cpu_constraints:
+      - {constraint: amd, nodes: "gpu-7-42/50/54/58, gpu-9-58/66", cpu_ram: "256 / 1 TB", gpus: "8x RTX A4000 / A5000 / 6000 Ada (varies by owner)"}
+      - {constraint: intel, nodes: "gpu-7-62, gpu-9-18, gpu-9-26", cpu_ram: "40 / 384 GB", gpus: "7-8x RTX 2080 Ti"}
+    rules:
+      - "Omitting --partition lands on preemptible low; say so."
+      - "Use +amd module variants on AMD nodes and +intel on Intel nodes."
+      - "Group members use their <group>-gpu partition (no time limit); others reach idle GPUs via low."
+    storage:
+      home: {quota: 20GB, backup: none}
+      group: "/group/<pi>grp (autofs — appears once accessed by name; id -Gn shows the group; no backups)"
+      per_job_tmp: "$TMPDIR=/tmp (~0.9 TB local); no /scratch"
+      databases: "/share/databases: alphafold ($ALPHAFOLD_DB_ROOT), blast (nr, refseq_protein, swissprot, pdb, 16S/18S/28S...; weekly), relion, cryolo, deepemhancer, medic"
+      backup_note: "no backups. Globus: 'UC Davis Franklin home'; PI shares on request at /group/<pi>grp/globus-write/<login>/"
+    software:
+      tree: "Environment Modules 5.5; /share/apps/22.04/modulefiles/spack/core (gcc 7.5/11.4/13.2, aocc/4.1.0, intel-oneapi-compilers/2023.2.1, cuda 8.0/11.2/11.7, openmpi/4.1.5{,+amd,+intel}, slurm), .../spack/software, /share/apps/franklin/modulefiles (matlab, sbgrid, scipion), plus CVMFS"
+      loaded_at_login: [slurm, "openmpi/default", ucx]
+      special:
+        - "Relion: relion/{cpu,gpu}/4.0.1+amd, relion/gpu/4.0.1+intel, 3.1.3 and 5.0-beta; module load relion/gpu default; GUI (ssh -Y) submits jobs itself; switch versions only with relion-helper (module load conda; conda activate relion-helper)"
+        - "AlphaFold: module load alphafold/2.3.2 then alphafold-wrapped --output_dir=... --fasta_paths=... --max_template_date=... --use_gpu_relax=true; GPU node required"
+        - "Conda: module load conda = same central CVMFS miniforge as Farm and Hive; cryo-EM envs have no modules — activate by name (conda env list)"
+      apptainer: false
+      ondemand_apps: [JupyterLab, RStudio, VS Code, Relion GUI]

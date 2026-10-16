@@ -9,8 +9,13 @@ The skill is harness-neutral — it works in Claude Code, pi, and opencode (all 
 same Agent Skills spec). It is `ucd-hpc/` and bundles:
 
 - `SKILL.md` — the workflow the agent follows (identify cluster → probe live → read references → verify).
+- `clusters.yml` — the single source of truth for per-cluster facts (partitions, limits, GPUs,
+  storage, software). Add a cluster by adding a block here; nothing else needs to change.
 - `references/` — distilled, verified facts: shared Slurm behavior, debugging tables, software,
-  storage, and one file per cluster (`hive.md`, `farm.md`, `franklin.md`).
+  storage, and one narrative file per cluster (`hive.md`, `farm.md`, `franklin.md`). The tabular
+  facts in each defer to `clusters.yml`.
+- `scripts/show-cluster.sh [CLUSTER]` — renders a cluster's `clusters.yml` block (resolves a name,
+  login host, or alias); no argument lists the clusters.
 - `scripts/cluster-context.sh` — read-only snapshot of the user's accounts, QOS limits, partitions,
   GPUs, storage, and software trees.
 - `scripts/job-postmortem.sh JOBID` — explains a pending/failed job from `sacct`/`scontrol` and its logs.
