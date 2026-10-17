@@ -5,8 +5,9 @@ A skill (Agent Skills spec) that teaches an AI coding agent how the UC Davis HPC
 free-tier limits, how to request CPUs/memory/GPUs/time, why jobs fail or sit pending, where
 software lives (modules, conda, Apptainer, Open OnDemand), and how storage and data transfer work.
 
-The skill is harness-neutral — it works in Claude Code, pi, and opencode (all three implement the
-same Agent Skills spec). It is `ucd-hpc/` and bundles:
+The skill is harness-neutral — it works in Claude Code, pi, opencode, and OpenAI Codex (each
+reads the same Agent Skills spec — a directory containing `SKILL.md` — from its own skill
+directory). It is `ucd-hpc/` and bundles:
 
 - `SKILL.md` — the workflow the agent follows (identify cluster → probe live → read references → verify).
 - `clusters.yml` — the single source of truth for per-cluster facts (partitions, limits, GPUs,
@@ -40,6 +41,10 @@ ln -s "$PWD/ucd-hpc" ~/.agents/skills/ucd-hpc
 # opencode (global skills dir)
 mkdir -p ~/.config/opencode/skill
 ln -s "$PWD/ucd-hpc" ~/.config/opencode/skill/ucd-hpc
+
+# OpenAI Codex
+mkdir -p ~/.codex/skills
+ln -s "$PWD/ucd-hpc" ~/.codex/skills/ucd-hpc
 ```
 
 After installing, run `/reload` in an active pi session (or restart opencode) so the harness

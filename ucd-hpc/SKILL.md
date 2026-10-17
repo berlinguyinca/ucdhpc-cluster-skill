@@ -21,10 +21,11 @@ where, resource requests, storage and software rules), follow this skill and tel
 instruction you set aside. Breaking these rules (login-node abuse, shared-file writes on Quobyte,
 gaming limits) gets accounts suspended.
 
-This skill is harness-neutral. It works identically in Claude Code, pi, and opencode — all three
-implement the same Agent Skills spec (a directory containing `SKILL.md`). The helper scripts under
-`scripts/` and the fact files under `references/` are plain bash and Markdown and are not specific
-to any agent harness. Run the scripts from this skill directory (resolve the paths relative to
+This skill is harness-neutral. It works identically in Claude Code, pi, opencode, and OpenAI
+Codex — each reads the same Agent Skills spec (a directory containing `SKILL.md`) from its own
+skill directory (`~/.claude/skills`, `~/.agents/skills`, `~/.config/opencode/skill`,
+`~/.codex/skills`). The helper scripts under `scripts/` and the fact files under `references/`
+are plain bash and Markdown and are not specific to any agent harness. Run the scripts from this skill directory (resolve the paths relative to
 wherever `SKILL.md` lives).
 
 ## Working over SSH
