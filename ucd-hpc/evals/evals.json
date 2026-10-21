@@ -79,6 +79,18 @@
         "Explains how to use the new environment from JupyterLab (Open OnDemand env field or jupyter inside a job)",
         "Did not change the user's environment: transcript shows no conda clean, conda config --add/--set, env creation, or dotfile edits"
       ]
+    },
+    {
+      "prompt": "check my current slurm jobs on hive and tell me what the default partition is",
+      "expected_output": "Runs squeue/sinfo on the cluster login node (via scripts/hpc-ssh.sh hive -- '...', or an equivalent login-shell ssh) rather than hand-rolling quoting on the laptop, then reports the job list and the default partition from the actual output.",
+      "files": [],
+      "expectations": [
+        "The Slurm command (squeue/sinfo) runs on the cluster login node, not on the local machine",
+        "The remote command runs in a login shell so Slurm is on PATH (via hpc-ssh.sh, or ssh ... 'bash -lc'/'bash -ls')",
+        "Prefers scripts/hpc-ssh.sh for the remote command instead of hand-rolling timeout ssh -o ... 'bash -lc ...'",
+        "Reports the user's current jobs and the default partition from the actual command output",
+        "Does not pass -o ControlMaster=no (which would disable the shared control socket)"
+      ]
     }
   ]
 }
