@@ -32,8 +32,22 @@ wherever `SKILL.md` lives).
 
 The harness usually runs on your laptop and reaches the cluster by `ssh` (e.g. `ssh hive` as the
 cluster account). This skill is then loaded from the **local** skill directory, but every probe and
-Slurm command in it must execute on the **cluster login node**, never on your laptop. Two ways to
-do that:
+Slurm command in it must execute on the **cluster login node**, never on your laptop.
+
+**For any one-off remote command, use `scripts/hpc-ssh.sh`** — it wraps `ssh` with the defaults that
+hand-rolled `timeout N ssh -o ... 'bash -lc ...'` gets wrong: a login shell (so `module` and the
+Slurm path work), correct quoting of `&&`/`|`/`$VAR`/embedded quotes, fail-fast BatchMode, an
+optional `timeout`, and it reuses your `~/.ssh/config` (so `Host hive -> User gw` and ControlMaster
+multiplexing apply; it never passes `ControlMaster=no`). It exits with the remote command's status.
+Put `--` before the command so the command's own flags are not read as options:
+  ```bash
+  $SKILL_DIR/scripts/hpc-ssh.sh hive -- "squeue -u $USER && sinfo -h -o '%R'"
+  $SKILL_DIR/scripts/hpc-ssh.sh hive -t 60 -- sacct -j 5        # cap the whole call at 60 s
+  $SKILL_DIR/scripts/hpc-ssh.sh hive --exec "$HOME/job.sh"       # run a local script on the login node
+  $SKILL_DIR/scripts/hpc-ssh.sh                                  # list the known clusters
+  ```
+
+To run the probe scripts on the login node, two ways:
 
 - **Skill installed on the login node** (recommended; mirror `~/.agents/skills/ucd-hpc` and
   `~/.config/opencode/skill/ucd-hpc` over via `rsync`, or clone + symlink). Then run the read-only
