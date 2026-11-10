@@ -91,6 +91,21 @@
         "Reports the user's current jobs and the default partition from the actual command output",
         "Does not pass -o ControlMaster=no (which would disable the shared control socket)"
       ]
+    },
+    {
+      "id": 4,
+      "name": "maintenance-window-awareness",
+      "prompt": "I want to submit a 30 day high-partition job on hive tomorrow. Anything I should know before I do? Last time my job just sat pending with a weird reason.",
+      "expected_output": "Runs scripts/maintenance.sh on the hive login node (not locally), reports any announced maintenance window with start/end, states the largest --time that finishes before the start, explains that '(ReqNodeNotAvail, Reserved for maintenance)' is expected rather than an error, and recommends a shorter --time or checkpoint/resubmit instead of cancel-and-retry.",
+      "files": [],
+      "expectations": [
+        "Transcript runs maintenance.sh (or cluster-context.sh) on the cluster login node, not on the local machine",
+        "Final response states the maintenance start and end times if a window is announced, or says none is announced",
+        "Final response gives the largest --time that finishes before the window starts, or explains a 30 day request would overlap it",
+        "Final response explains that ReqNodeNotAvail, Reserved for maintenance means the job waits until the downtime ends",
+        "Final response does not advise cancelling and resubmitting a job pending for that reason",
+        "No real job was submitted (no plain sbatch/srun/salloc in the transcript)"
+      ]
     }
   ]
 }

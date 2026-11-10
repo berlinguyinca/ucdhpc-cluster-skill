@@ -50,6 +50,11 @@ if ! has '^--mem(-per-cpu|-per-gpu)?'; then
 fi
 m=$(val '--mem(-per-cpu|-per-gpu)?'); [ -n "$m" ] && [[ $m =~ ^[0-9]+$ ]] && warn "--mem=$m has no unit: Slurm reads megabytes. Use e.g. ${m}G if you meant gigabytes"
 t=$(val '(--time|-t)'); [ -n "$t" ] && [[ $t =~ ^[0-9]+$ ]] && info "--time=$t is read as $t minutes"
+# planned maintenance: a --time that reaches into the window keeps the job pending until it ends
+if [ -n "$t" ] && [ -x "$(dirname "${BASH_SOURCE[0]}")/maintenance.sh" ]; then
+  mw=$(bash "$(dirname "${BASH_SOURCE[0]}")/maintenance.sh" --check-time "$t" 2>/dev/null); mrc=$?
+  [ "$mrc" = 12 ] && warn "$mw"
+fi
 
 ACC=$(val '(--account|-A)'); PART=$(val '(--partition|-p)')
 if [ "$CLUSTER" = hive ] && [ "$ACC" = publicgrp ] && [ "$PART" = high ]; then

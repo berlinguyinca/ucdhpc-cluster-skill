@@ -56,6 +56,7 @@ To run the probe scripts on the login node, two ways:
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/show-cluster.sh hive   # facts from clusters.yml
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/lint-jobscript.sh "$HOME/job.sh"   # file must be on the login node
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/job-postmortem.sh "$JOBID"
+  ssh hive bash ~/.agents/skills/ucd-hpc/scripts/maintenance.sh        # announced downtime window
   ```
 - **No remote install yet** — pipe a local copy of a script over stdin (works for the self-contained
   `cluster-context.sh`; `$SKILL_DIR` is the directory holding this `SKILL.md`):
@@ -116,6 +117,14 @@ Exempt from enforcement is not permission.
    Off-cluster, ask the user to paste
    `sacctmgr show assoc user=$USER format=account%20,partition%20,qos%40` or the
    `/opt/hpccf/bin/slurm-show-resources.py` table printed at every login.
+
+   Its "planned maintenance" section (from `scripts/maintenance.sh`) reports an announced
+   downtime window. HPCCF prints a "Maintenance Window Notice" at every interactive login, but a
+   non-interactive `ssh host cmd` skips profile.d, so **you will not see it unless you run
+   `scripts/maintenance.sh`**. It reads the `MAINT` reservation the notice is built from
+   (running `/etc/profile.d/zzz_show-slurm-reservation.sh` directly does not work: it is
+   interactive-only and needs `scontrol` on `PATH`). The skill stores no dates; the window is
+   always read live from the cluster. Check it before choosing `--time`.
 
 3. **Read the cluster config plus the task file.** Get the facts for *this* cluster first from the
    config (`clusters.yml`, rendered by `scripts/show-cluster.sh <cluster>`; it resolves a name,
@@ -178,6 +187,12 @@ Exempt from enforcement is not permission.
   central (read-only CVMFS) env: pip falls back to `~/.local` (`software.md` has the venv fix).
 - **`rsync --delete` destroys data**; include it only for an explicit mirror, and spell out the
   trailing-slash semantics.
+- **Planned maintenance**: run `scripts/maintenance.sh` (`--brief` for one line,
+  `--check-time D-HH:MM:SS` to test a request) before submitting anything long. At the window start
+  the whole cluster goes offline and every running job is killed; a job whose `--time` reaches into
+  the window stays pending as `(ReqNodeNotAvail, Reserved for maintenance)` until the downtime ends.
+  Tell the user the dates, suggest a `--time` that finishes before the start (or checkpointing and
+  resubmitting after), and never treat that pending reason as an error to cancel and retry.
 - **Say what you could not verify** and give the command that would. Do not invent partition
   names, QOS limits, or module versions.
 

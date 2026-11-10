@@ -19,6 +19,7 @@ same Agent Skills spec). It is `ucd-hpc/` and bundles:
 - `scripts/cluster-context.sh` — read-only snapshot of the user's accounts, QOS limits, partitions,
   GPUs, storage, and software trees.
 - `scripts/job-postmortem.sh JOBID` — explains a pending/failed job from `sacct`/`scontrol` and its logs.
+- `scripts/maintenance.sh [--brief | --check-time T]` — reports announced maintenance windows (login notice + MAINT reservations), the largest `--time` that finishes before it, and whether a given `--time` overlaps. Run `tests/test-maintenance.sh` to test it.
 - `scripts/lint-jobscript.sh SCRIPT` — catches cluster-specific mistakes and runs `sbatch --test-only`.
 
 ## Install

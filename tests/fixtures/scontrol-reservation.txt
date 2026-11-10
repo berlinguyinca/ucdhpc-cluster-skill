@@ -1,0 +1,14 @@
+ReservationName=maintenance-window StartTime=2026-12-07T06:00:00 EndTime=2026-12-14T18:00:00 Duration=7-12:00:00
+   Nodes=hive-as-11-2-[26,30,34,38-49,54,58,70-73],hive-dc-7-9-[42-65,70,74],work NodeCnt=171 CoreCnt=17376 Features=(null) PartitionName=(null) Flags=MAINT,IGNORE_JOBS,SPEC_NODES,ALL_NODES,MAGNETIC
+   TRES=cpu=17376
+   AllowedPartitions=(null) QOS=(null)
+   Users=(null) Groups=hpccfgrp Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null)
+   MaxStartDelay=(null)
+
+ReservationName=other StartTime=2026-11-20T06:00:00 EndTime=2026-11-20T07:00:00 Duration=01:00:00
+   Nodes=c10 NodeCnt=1 CoreCnt=1 Features=(null) PartitionName=(null) Flags=SPEC_NODES
+   Users=bob Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE
+
+ReservationName=partial_maint StartTime=2026-12-01T06:00:00 EndTime=2026-12-01T12:00:00 Duration=06:00:00
+   Nodes=c11 NodeCnt=1 CoreCnt=1 Features=(null) PartitionName=(null) Flags=MAINT,SPEC_NODES
+   Users=root Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE

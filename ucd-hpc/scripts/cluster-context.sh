@@ -59,9 +59,8 @@ if [ -n "$QOS" ]; then
     | column -t -s'|'
 fi
 
-hr "maintenance reservations (jobs whose --time reaches into one wait as ReqNodeNotAvail)"
-T scontrol show reservation | awk '/ReservationName/{n=$1} /StartTime/{print n, $1, $2} ' | sed 's/ReservationName=//' | head -5
-[ -z "$(T scontrol show reservation)" ] && echo "none"
+hr "planned maintenance (login notice + MAINT reservations; see scripts/maintenance.sh)"
+bash "$(dirname "${BASH_SOURCE[0]}")/maintenance.sh" || true
 
 # --- partitions ----------------------------------------------------------------
 hr "partitions: max time, default mem per CPU, preemption, nodes alloc/idle/other/total, GPUs"
