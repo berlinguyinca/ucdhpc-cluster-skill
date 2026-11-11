@@ -39,6 +39,7 @@ echo "$ACC" | cut -d'|' -f1-8,12,13,16,17,19 | column -t -s'|'
 # main record = the line whose JobID is exactly J (or J_arraytask)
 MAIN=$(awk -F'|' -v j="$J" 'NR>1 && ($1==j || $1 ~ "^"j"_[0-9]+$" || $1 ~ "^"j"\\+") {print; exit}' <<<"$ACC")
 [ -z "$MAIN" ] && MAIN=$(sed -n 2p <<<"$ACC")
+# shellcheck disable=SC2034  # fields kept so the positional read stays aligned with the sacct format
 IFS='|' read -r JID JNAME STATE EXIT REASON PART ACCT QOS SUBMIT START END ELAPSED TLIM REQCPUS ALLOCCPUS REQMEM MAXRSS TOTALCPU NODES WORKDIR <<<"$MAIN"
 STATE0=${STATE%% *}
 

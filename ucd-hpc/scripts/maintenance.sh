@@ -193,7 +193,7 @@ fi
 if [ "$KIND" = cluster ]; then
   echo "  A job whose --time reaches into the window does not start; it waits as"
   echo "  (ReqNodeNotAvail, Reserved for maintenance) and starts after the window. That is expected:"
-  echo "  do not cancel and resubmit it. Work still running at the start may be killed: shorten --time,"
+  echo "  do not cancel and resubmit it. All jobs still running when the window starts are killed: shorten --time,"
   echo "  or checkpoint and resubmit after the window."
 else
   echo "  Partial window: only jobs that need these nodes/partition wait (ReqNodeNotAvail, Reserved for"
