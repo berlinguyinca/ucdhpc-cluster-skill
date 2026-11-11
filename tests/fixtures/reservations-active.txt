@@ -1,0 +1,1 @@
+ReservationName=emergency StartTime=2026-11-10T12:00:00 EndTime=(null) Duration=UNLIMITED Nodes=ALL NodeCnt=64 CoreCnt=4096 Features=(null) PartitionName=(null) Flags=MAINT,IGNORE_JOBS,ALL_NODES TRES=cpu=4096 Users=root Groups=(null) Accounts=(null) Licenses=(null) State=ACTIVE BurstBuffer=(null) MaxStartDelay=(null)
