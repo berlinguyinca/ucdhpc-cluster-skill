@@ -60,11 +60,20 @@ if [ -n "$QOS" ]; then
     | column -t -s'|'
 fi
 
-hr "maintenance reservations (jobs whose --time reaches into one wait as ReqNodeNotAvail)"
-R=$(T scontrol show reservation); rc=$?
-if [ "$rc" -ne 0 ]; then echo "query failed (exit $rc)"
-elif grep -q ReservationName <<<"$R"; then awk '/ReservationName/{print $1, $2, $3}' <<<"$R" | sed 's/ReservationName=//' | head -5
-else echo "none"; fi
+hr "planned maintenance (Slurm reservations with Flags=MAINT)"
+# maintenance.sh sits next to this script. When this script is piped over stdin there is no
+# "next to", so list the MAINT reservations raw (still one scontrol call) and say how to get more.
+SELF=${BASH_SOURCE[0]:-}
+if [ -n "$SELF" ] && [ -f "$SELF" ] && [ -f "$(dirname "$SELF")/maintenance.sh" ]; then
+  if [ "$BRIEF" = 1 ]; then bash "$(dirname "$SELF")/maintenance.sh" --brief; else bash "$(dirname "$SELF")/maintenance.sh"; fi
+else
+  M=$(SLURM_TIME_FORMAT=standard T scontrol -o show reservation \
+    | awk '/^ReservationName=/ {if (r != "") print r; r = $0; next} r != "" && /^[[:space:]]+[^[:space:]]/ {r = r " " $0} END {if (r != "") print r}' \
+    | awk '/[[:space:]]Flags=([^[:space:]]*,)?MAINT(,|[[:space:]]|$)/ {
+        o = ""; for (i = 1; i <= NF; i++) if ($i ~ /^(ReservationName|StartTime|EndTime|PartitionName|NodeCnt|Flags|State)=/) o = o " " $i; print o }')
+  echo "${M:-none found (or scontrol unavailable)}"
+  echo "(times are cluster-local; for the safe --time run: ssh HOST 'bash -s' < scripts/maintenance.sh)"
+fi
 
 # --- partitions ----------------------------------------------------------------
 hr "partitions: max time, default mem per CPU, preemption, nodes alloc/idle/other/total, GPUs"

@@ -42,7 +42,7 @@ time are on the step lines. Exit codes are `program:signal`. Log files: `scontro
 | `QOSMax*PerUser*`, `AssocMax*`, `AssocGrp*` | per-user or association cap | wait or use another account |
 | `JobArrayTaskLimit` | the `%N` throttle working | nothing |
 | `Dependency` / `DependencyNeverSatisfied` | waiting on a parent / the parent failed | nothing / `scancel` and resubmit after fixing the parent |
-| `ReqNodeNotAvail, Reserved for maintenance` | `--time` reaches into the maintenance window | shorten `--time`; `scontrol show reservation` |
+| `ReqNodeNotAvail, Reserved for maintenance` | `--time` reaches into the maintenance window | expected, not a fault: `scripts/maintenance.sh` shows the window; shorten `--time` to its "largest --time" to start sooner, or leave it queued (it starts after the window). Never cancel and resubmit for this |
 | `ReqNodeNotAvail, UnavailableNodes:` | requested/constrained nodes are down | drop constraints; `sinfo -R` |
 | `BadConstraints` | `--constraint` matches no node in the partition | `sinfo -N -h -o "%N %f"` |
 | `JobHeldUser` / `JobHeldAdmin` / `launch failed requeued held` | held | `scontrol release ID`; report repeats |

@@ -1,5 +1,8 @@
 # Franklin
 
+> Per-cluster facts (partitions, limits, GPUs, storage paths) are maintained in `../clusters.yml`
+> (render: `scripts/show-cluster.sh franklin`) and are authoritative; this file is the narrative supplement.
+
 College of Biological Sciences cluster (CNS, MMG, MCB, cryo-EM facility, approved collaborators):
 genomics, cryo-EM, computational neuroscience. Docs: <https://docs.hpc.ucdavis.edu/franklin/>.
 

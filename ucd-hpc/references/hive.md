@@ -1,5 +1,8 @@
 # Hive
 
+> Per-cluster facts (partitions, limits, GPUs, storage paths) are maintained in `../clusters.yml`
+> (render: `scripts/show-cluster.sh hive`) and are authoritative; this file is the narrative supplement.
+
 Centrally managed campus cluster, open to all UC Davis staff, faculty, and graduate students
 (HPC2's hardware merged in July 2026). Docs: <https://docs.hpc.ucdavis.edu/hive/>.
 
