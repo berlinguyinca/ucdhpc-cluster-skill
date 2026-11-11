@@ -50,6 +50,22 @@ if ! has '^--mem(-per-cpu|-per-gpu)?'; then
 fi
 m=$(val '--mem(-per-cpu|-per-gpu)?'); [ -n "$m" ] && [[ $m =~ ^[0-9]+$ ]] && warn "--mem=$m has no unit: Slurm reads megabytes. Use e.g. ${m}G if you meant gigabytes"
 t=$(val '(--time|-t)'); [ -n "$t" ] && [[ $t =~ ^[0-9]+$ ]] && info "--time=$t is read as $t minutes"
+# planned maintenance: a --time that reaches into the window keeps the job pending until it ends
+# (maintenance.sh sits next to this script; when piped over stdin it cannot be found: say so)
+SELF=${BASH_SOURCE[0]:-}
+if [ -n "$t" ]; then
+  if [ -n "$SELF" ] && [ -f "$SELF" ] && [ -f "$(dirname "$SELF")/maintenance.sh" ]; then
+    mw=$(bash "$(dirname "$SELF")/maintenance.sh" --check-time "$t" 2>&1); mrc=$?
+    case $mrc in
+      12) warn "$mw" ;;
+      13) info "$mw" ;;
+      3)  info "maintenance window not checked: could not read Slurm reservations here" ;;
+      2)  info "maintenance window not checked: cannot parse --time $t" ;;
+    esac
+  else
+    info "maintenance window not checked (maintenance.sh not found next to this script); run: maintenance.sh --check-time $t"
+  fi
+fi
 
 ACC=$(val '(--account|-A)'); PART=$(val '(--partition|-p)')
 if [ "$CLUSTER" = hive ] && [ "$ACC" = publicgrp ] && [ "$PART" = high ]; then

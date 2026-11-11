@@ -1,0 +1,32 @@
+ReservationName=gpu_firmware StartTime=2026-11-20T08:00:00 EndTime=2026-11-20T12:00:00 Duration=04:00:00
+   Nodes=gpu[01-04] NodeCnt=4 CoreCnt=256 Features=(null) PartitionName=(null) Flags=SPEC_NODES,MAINT,REPLACE
+   TRES=cpu=256
+   Users=root Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)
+
+ReservationName=lustre_upgrade StartTime=2026-11-25T07:00:00 EndTime=2026-11-25T19:00:00 Duration=12:00:00
+   Nodes=cn[001-128] NodeCnt=128 CoreCnt=8192 Features=(null) PartitionName=standard Flags=MAINT,IGNORE_JOBS,ALL_NODES
+   TRES=cpu=8192
+   Users=(null) Groups=(null) Accounts=sysadmin Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)
+
+ReservationName=Q1-downtime StartTime=2027-01-04T09:00:00 EndTime=2027-01-06T17:00:00 Duration=2-08:00:00
+   Nodes=ALL NodeCnt=400 CoreCnt=25600 Features=(null) PartitionName=(null) Flags=FLEX,MAINT,ALL_NODES,MAGNETIC
+   TRES=cpu=25600
+   Users=root Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)
+
+ReservationName=maint-lookalike StartTime=2026-11-15T00:00:00 EndTime=2026-11-16T00:00:00 Duration=1-00:00:00
+   Nodes=cn001 NodeCnt=1 CoreCnt=64 Features=(null) PartitionName=(null) Flags=SPEC_NODES
+   Users=alice Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)
+
+ReservationName=old_maint StartTime=2026-10-01T06:00:00 EndTime=2026-10-02T06:00:00 Duration=1-00:00:00
+   Nodes=ALL NodeCnt=400 CoreCnt=25600 Features=(null) PartitionName=(null) Flags=MAINT,ALL_NODES
+   Users=root Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)
+
+ReservationName=broken_maint StartTime=Unknown EndTime=Unknown Duration=UNLIMITED
+   Nodes=cn002 NodeCnt=1 CoreCnt=64 Features=(null) PartitionName=(null) Flags=MAINT
+   Users=root Groups=(null) Accounts=(null) Licenses=(null) State=INACTIVE BurstBuffer=(null) Watts=n/a
+   MaxStartDelay=(null)

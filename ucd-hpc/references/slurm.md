@@ -53,7 +53,7 @@ types include `a100`, `a6000`, `6000_blackwell`, `l40s`, `5000_ada`; Farm `a100`
 
 **Time.** `--time=D-HH:MM:SS` (`90` = 90 min, `2:00:00`, `1-00`). Over `MaxTime` fails with
 `Requested time limit is invalid`. A limit reaching into a maintenance reservation pends as
-`ReqNodeNotAvail, Reserved for maintenance`; shorten it.
+`ReqNodeNotAvail, Reserved for maintenance`; `scripts/maintenance.sh --check-time T` checks it.
 
 **Constraints.** `--constraint='(zen3|zen4)'` (Hive CPU generations), `--constraint=amd` (Franklin).
 `sinfo -N -h -o "%N %f" | sort -u` lists features. Every constraint lengthens the wait.
