@@ -6,6 +6,8 @@
 set -u
 # fixtures carry Pacific-time stamps and tests match the zone abbreviation: pin it (CI runners are UTC)
 export TZ=America/Los_Angeles
+# maintenance.sh targets Linux login nodes (GNU date -d); skip on BSD/macOS runners
+date -d '2026-01-01 00:00:00' +%s >/dev/null 2>&1 || { echo "# SKIP: GNU date -d not available"; exit 0; }
 HERE=$(cd "$(dirname "$0")" && pwd)
 S="$HERE/../ucd-hpc/scripts"; M="$S/maintenance.sh"; FX="$HERE/fixtures"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
@@ -138,7 +140,8 @@ out=$(cd "$TMP" && env "$SP" "$WHOLE" "$NOW" bash -s -- --brief < "$C" 2>&1); rc
 { [ $rc = 0 ] && ! grep -qiE 'PLANTED|No such file|error' <<<"$out" && grep -q "ReservationName=maintenance-window StartTime=2026-12-07T06:00:00" <<<"$out"; } \
   && ok "context piped: raw MAINT reservation, no errors" || bad "context piped: raw MAINT reservation, no errors" "$out"
 out=$(cd "$TMP" && env "$SP" "$GEN" "$NOW" bash -s < "$C" 2>&1)
-{ grep -q "ReservationName=Q1-downtime" <<<"$out" && ! grep -q maint-lookalike <<<"$out"; } \
+sect=$(sed -n '/== planned maintenance/,$p' <<<"$out")
+{ grep -q "ReservationName=Q1-downtime" <<<"$sect" && ! grep -q maint-lookalike <<<"$sect"; } \
   && ok "context piped: MAINT token only" || bad "context piped: MAINT token only" "$out"
 
 echo; echo "passed=$PASS failed=$FAIL"; [ "$FAIL" = 0 ]

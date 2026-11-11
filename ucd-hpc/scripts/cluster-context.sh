@@ -60,6 +60,12 @@ if [ -n "$QOS" ]; then
     | column -t -s'|'
 fi
 
+hr "maintenance reservations (jobs whose --time reaches into one wait as ReqNodeNotAvail)"
+R=$(T scontrol show reservation); rc=$?
+if [ "$rc" -ne 0 ]; then echo "query failed (exit $rc)"
+elif grep -q ReservationName <<<"$R"; then awk '/ReservationName/{print $1, $2, $3}' <<<"$R" | sed 's/ReservationName=//' | head -5
+else echo "none"; fi
+
 hr "planned maintenance (Slurm reservations with Flags=MAINT)"
 # maintenance.sh sits next to this script. When this script is piped over stdin there is no
 # "next to", so list the MAINT reservations raw (still one scontrol call) and say how to get more.
