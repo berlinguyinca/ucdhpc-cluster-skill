@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tests for ucd-hpc/scripts/maintenance.sh and its callers. Real scripts, real awk/date code.
 # The only stand-ins are tiny `scontrol`/`sinfo` commands that print a captured `scontrol show
-# reservation` sample (no Slurm on CI). Fixtures: a real Hive capture (one-line form) plus
+# reservation` sample (no Slurm on CI). Fixtures: a real whole-cluster capture (one-line form, host names anonymized) plus
 # generic, non-UC-Davis samples (multi-line form, other names/flags/scopes, Unknown/(null) times).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -34,43 +34,43 @@ run() {
   fi
   ok "$name"
 }
-HIVE="FIXTURE=$FX/reservations-hive.txt"
+WHOLE="FIXTURE=$FX/reservations-whole-cluster.txt"
 GEN="FIXTURE=$FX/reservations-generic.txt"
 ACT="FIXTURE=$FX/reservations-active.txt"
 NONE="FIXTURE=$FX/reservations-none.txt"
 NOW="MAINTENANCE_SH_NOW=2026-11-10 16:00:00"
 
-# --- real Hive capture: one whole-cluster window (matches HPCCF's login notice) ----------------
-run "hive: upcoming whole-cluster"   0 "^maintenance: upcoming, whole cluster \(Slurm reservation maintenance-window" "$SP" "$HIVE" "$NOW" "$M"
-run "hive: start with tz"            0 "starts:  2026-12-07 06:00:00 P[SD]T +\(in 26d 14h 0m\)" "$SP" "$HIVE" "$NOW" "$M"
-run "hive: end and length"           0 "ends:    2026-12-14 18:00:00 P[SD]T +\(lasts 7d 12h 0m\)" "$SP" "$HIVE" "$NOW" "$M"
-run "hive: max time = HPCCF notice"  0 "if the job starts now: 26-14:00:00" "$SP" "$HIVE" "$NOW" "$M"
-run "hive: pending reason explained" 0 "ReqNodeNotAvail, Reserved for maintenance" "$SP" "$HIVE" "$NOW" "$M"
-run "hive: brief key=value"          0 "^maintenance: state=upcoming scope=cluster start=2026-12-07T06:00:00 end=2026-12-14T18:00:00 tz=P[SD]T max_time_now=26-14:00:00 reservation=maintenance-window other_windows=0$" "$SP" "$HIVE" "$NOW" "$M" --brief
-run "hive: during window -> active"  0 "^maintenance: ACTIVE now, whole cluster" "$SP" "$HIVE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M"
-run "hive: brief active no max"      0 "^maintenance: state=active .*reservation=maintenance-window" "$SP" "$HIVE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M" --brief
-run "hive: after window -> none"     0 "^maintenance: none" "$SP" "$HIVE" "MAINTENANCE_SH_NOW=2026-12-15 00:00:00" "$M"
+# --- real capture: one whole-cluster window  ----------------
+run "whole-cluster: upcoming whole-cluster"   0 "^maintenance: upcoming, whole cluster \(Slurm reservation maintenance-window" "$SP" "$WHOLE" "$NOW" "$M"
+run "whole-cluster: start with tz"            0 "starts:  2026-12-07 06:00:00 P[SD]T +\(in 26d 14h 0m\)" "$SP" "$WHOLE" "$NOW" "$M"
+run "whole-cluster: end and length"           0 "ends:    2026-12-14 18:00:00 P[SD]T +\(lasts 7d 12h 0m\)" "$SP" "$WHOLE" "$NOW" "$M"
+run "whole-cluster: max time = site notice"  0 "if the job starts now: 26-14:00:00" "$SP" "$WHOLE" "$NOW" "$M"
+run "whole-cluster: pending reason explained" 0 "ReqNodeNotAvail, Reserved for maintenance" "$SP" "$WHOLE" "$NOW" "$M"
+run "whole-cluster: brief key=value"          0 "^maintenance: state=upcoming scope=cluster start=2026-12-07T06:00:00 end=2026-12-14T18:00:00 tz=P[SD]T max_time_now=26-14:00:00 reservation=maintenance-window other_windows=0$" "$SP" "$WHOLE" "$NOW" "$M" --brief
+run "whole-cluster: during window -> active"  0 "^maintenance: ACTIVE now, whole cluster" "$SP" "$WHOLE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M"
+run "whole-cluster: brief active no max"      0 "^maintenance: state=active .*reservation=maintenance-window" "$SP" "$WHOLE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M" --brief
+run "whole-cluster: after window -> none"     0 "^maintenance: none" "$SP" "$WHOLE" "MAINTENANCE_SH_NOW=2026-12-15 00:00:00" "$M"
 # --check-time: Slurm time forms, boundaries, junk
-run "check: short fits"              0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 2-00:00:00
-run "check: exactly the limit fits"  0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 26-14:00:00
-run "check: one minute over"        12 "^OVERLAP.*whole-cluster.*maintenance-window.*26-14:00:00" "$SP" "$HIVE" "$NOW" "$M" --check-time 26-14:01:00
-run "check: seconds round up"       12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time 26-14:00:01
-run "check: minutes form"           12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time 99999
-run "check: M:S form"                0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 90:30
-run "check: H:M:S form"              0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 12:00:00
-run "check: D-H form"                0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 7-12
-run "check: D-H:M form"             12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time 30-0:0
-run "check: leading zeros (08)"      0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time 08-08:08:08
-run "check: whitespace trimmed"      0 "^OK" "$SP" "$HIVE" "$NOW" "$M" --check-time " 1-00:00:00 "
-run "check: 0 = no limit"           12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time 0
-run "check: UNLIMITED"              12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time UNLIMITED
-run "check: INFINITE"               12 "^OVERLAP" "$SP" "$HIVE" "$NOW" "$M" --check-time INFINITE
-run "check: during window"          12 "^OVERLAP.*in progress since" "$SP" "$HIVE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M" --check-time 1:00
-run "check: too many fields"         2 "cannot parse" "$SP" "$HIVE" "$NOW" "$M" --check-time 1-2:3:4:5
-run "check: no silent overflow"      2 "cannot parse" "$SP" "$HIVE" "$NOW" "$M" --check-time 99999999999999999999
-run "check: junk"                    2 "cannot parse" "$SP" "$HIVE" "$NOW" "$M" --check-time abc
-run "check: negative"                2 "cannot parse" "$SP" "$HIVE" "$NOW" "$M" --check-time -5
-run "check: missing value"           2 "usage" "$SP" "$HIVE" "$NOW" "$M" --check-time
+run "check: short fits"              0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 2-00:00:00
+run "check: exactly the limit fits"  0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 26-14:00:00
+run "check: one minute over"        12 "^OVERLAP.*whole-cluster.*maintenance-window.*26-14:00:00" "$SP" "$WHOLE" "$NOW" "$M" --check-time 26-14:01:00
+run "check: seconds round up"       12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time 26-14:00:01
+run "check: minutes form"           12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time 99999
+run "check: M:S form"                0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 90:30
+run "check: H:M:S form"              0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 12:00:00
+run "check: D-H form"                0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 7-12
+run "check: D-H:M form"             12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time 30-0:0
+run "check: leading zeros (08)"      0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time 08-08:08:08
+run "check: whitespace trimmed"      0 "^OK" "$SP" "$WHOLE" "$NOW" "$M" --check-time " 1-00:00:00 "
+run "check: 0 = no limit"           12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time 0
+run "check: UNLIMITED"              12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time UNLIMITED
+run "check: INFINITE"               12 "^OVERLAP" "$SP" "$WHOLE" "$NOW" "$M" --check-time INFINITE
+run "check: during window"          12 "^OVERLAP.*in progress since" "$SP" "$WHOLE" "MAINTENANCE_SH_NOW=2026-12-08 10:00:00" "$M" --check-time 1:00
+run "check: too many fields"         2 "cannot parse" "$SP" "$WHOLE" "$NOW" "$M" --check-time 1-2:3:4:5
+run "check: no silent overflow"      2 "cannot parse" "$SP" "$WHOLE" "$NOW" "$M" --check-time 99999999999999999999
+run "check: junk"                    2 "cannot parse" "$SP" "$WHOLE" "$NOW" "$M" --check-time abc
+run "check: negative"                2 "cannot parse" "$SP" "$WHOLE" "$NOW" "$M" --check-time -5
+run "check: missing value"           2 "usage" "$SP" "$WHOLE" "$NOW" "$M" --check-time
 run "bad flag"                       2 "usage" "$M" --nope
 run "help works when piped"          0 "usage" bash -s -- --help < "$M"
 
@@ -105,34 +105,34 @@ run "scontrol error -> unknown"      3 "failed \(exit 1\)" "$SP" "FIXTURE=/dev/n
 run "scontrol timeout -> unknown"    3 "timed out" "$SP" "FIXTURE=/dev/null" "SCONTROL_RC=124" "$NOW" "$M" --check-time 5
 # Load / format discipline: exactly one scontrol call, one-line form, standard time format
 : > "$LOG"
-env "$SP" "$HIVE" "$NOW" SLURM_TIME_FORMAT=relative bash "$M" >/dev/null 2>&1
+env "$SP" "$WHOLE" "$NOW" SLURM_TIME_FORMAT=relative bash "$M" >/dev/null 2>&1
 [ "$(cat "$LOG")" = "args=-o show reservation SLURM_TIME_FORMAT=standard" ] && ok "one scontrol call, -o, SLURM_TIME_FORMAT=standard" || bad "scontrol call discipline" "$(cat "$LOG")"
-run "piped over stdin works"         0 "^maintenance: state=upcoming" "$SP" "$HIVE" "$NOW" bash -s -- --brief < "$M"
+run "piped over stdin works"         0 "^maintenance: state=upcoming" "$SP" "$WHOLE" "$NOW" bash -s -- --brief < "$M"
 
 # --- lint-jobscript.sh integration (--no-test: no scheduler here) -------------------------------
 L="$S/lint-jobscript.sh"
 mkjob() { printf '#!/bin/bash\n#SBATCH --account=a\n#SBATCH --partition=low\n#SBATCH %s\n#SBATCH --mem=1G\n#SBATCH --output=j-%%j.out\nsleep 1\n' "$1" > "$TMP/job.sh"; }
 mkjob --time=30-00:00:00
-run "lint: warns on overlap"        0 "WARN:  OVERLAP" "$SP" "$HIVE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
+run "lint: warns on overlap"        0 "WARN:  OVERLAP" "$SP" "$WHOLE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
 mkjob "-t 30-0"
-run "lint: -t D-H form overlaps"    0 "WARN:  OVERLAP" "$SP" "$HIVE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
+run "lint: -t D-H form overlaps"    0 "WARN:  OVERLAP" "$SP" "$WHOLE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
 mkjob --time=1-0
-run "lint: quiet when job fits"     0 "!OVERLAP|maintenance" "$SP" "$HIVE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
+run "lint: quiet when job fits"     0 "!OVERLAP|maintenance" "$SP" "$WHOLE" "$NOW" bash "$L" "$TMP/job.sh" --no-test
 mkjob --time=10-0
 run "lint: partial is info only"    0 "info:  PARTIAL OVERLAP" "$SP" "$GEN" "$NOW" bash "$L" "$TMP/job.sh" --no-test
 run "lint: unknown is info"         0 "info:  maintenance window not checked" "PATH=$TMP/empty:/usr/bin:/bin" bash "$L" "$TMP/job.sh" --no-test
 mkjob --time=30-00:00:00
 # piped: no script dir, so it must not run ./maintenance.sh from the cwd (plant a trap there)
 printf 'echo PLANTED; exit 12\n' > "$TMP/maintenance.sh"
-out=$(cd "$TMP" && env "$SP" "$HIVE" "$NOW" bash -s -- "$TMP/job.sh" --no-test < "$L" 2>&1)
+out=$(cd "$TMP" && env "$SP" "$WHOLE" "$NOW" bash -s -- "$TMP/job.sh" --no-test < "$L" 2>&1)
 grep -q PLANTED <<<"$out" && bad "lint piped: ignores ./maintenance.sh" "$out" || ok "lint piped: ignores ./maintenance.sh"
 grep -q "maintenance window not checked (maintenance.sh not found" <<<"$out" && ok "lint piped: says not checked" || bad "lint piped: says not checked" "$out"
 
 # --- cluster-context.sh integration (stand-in scontrol answers ClusterName; sinfo prints nothing)
 C="$S/cluster-context.sh"
-run "context: full report section"  0 "^maintenance: upcoming, whole cluster" "$SP" "$HIVE" "$NOW" bash "$C"
-run "context: --brief passes on"    0 "^maintenance: state=upcoming" "$SP" "$HIVE" "$NOW" bash "$C" --brief
-out=$(cd "$TMP" && env "$SP" "$HIVE" "$NOW" bash -s -- --brief < "$C" 2>&1); rc=$?
+run "context: full report section"  0 "^maintenance: upcoming, whole cluster" "$SP" "$WHOLE" "$NOW" bash "$C"
+run "context: --brief passes on"    0 "^maintenance: state=upcoming" "$SP" "$WHOLE" "$NOW" bash "$C" --brief
+out=$(cd "$TMP" && env "$SP" "$WHOLE" "$NOW" bash -s -- --brief < "$C" 2>&1); rc=$?
 { [ $rc = 0 ] && ! grep -qiE 'PLANTED|No such file|error' <<<"$out" && grep -q "ReservationName=maintenance-window StartTime=2026-12-07T06:00:00" <<<"$out"; } \
   && ok "context piped: raw MAINT reservation, no errors" || bad "context piped: raw MAINT reservation, no errors" "$out"
 out=$(cd "$TMP" && env "$SP" "$GEN" "$NOW" bash -s < "$C" 2>&1)

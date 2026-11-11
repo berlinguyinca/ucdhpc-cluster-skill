@@ -56,13 +56,13 @@ To run the probe scripts on the login node, two ways:
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/show-cluster.sh hive   # facts from clusters.yml
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/lint-jobscript.sh "$HOME/job.sh"   # file must be on the login node
   ssh hive bash ~/.agents/skills/ucd-hpc/scripts/job-postmortem.sh "$JOBID"
-  ssh hive bash ~/.agents/skills/ucd-hpc/scripts/maintenance.sh --brief   # planned maintenance window
+  ssh <login-host> bash ~/.agents/skills/ucd-hpc/scripts/maintenance.sh --brief   # planned maintenance window
   ```
 - **No remote install yet** — pipe a local copy of a script over stdin (works for the self-contained
   `cluster-context.sh` and `maintenance.sh`; `$SKILL_DIR` is the directory holding this `SKILL.md`):
   ```bash
   ssh hive 'bash -s' < "$SKILL_DIR/scripts/cluster-context.sh"
-  ssh hive 'bash -s -- --check-time 3-00:00:00' < "$SKILL_DIR/scripts/maintenance.sh"
+  ssh <login-host> 'bash -s -- --check-time 3-00:00:00' < "$SKILL_DIR/scripts/maintenance.sh"
   ```
   Or, once the login node has `git`: `ssh hive 'git clone https://github.com/berlinguyinca/ucdhpc-cluster-skill ~/ucdhpc-cluster-skill'` and reference `~/ucdhpc-cluster-skill/ucd-hpc/scripts/...`.
 

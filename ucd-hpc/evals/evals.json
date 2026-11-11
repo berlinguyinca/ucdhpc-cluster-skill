@@ -95,8 +95,8 @@
     {
       "id": 4,
       "name": "maintenance-window-awareness",
-      "prompt": "I want to submit a 30 day high-partition job on hive tomorrow. Anything I should know before I do? Last time my job just sat pending with a weird reason.",
-      "expected_output": "Runs scripts/maintenance.sh (e.g. --check-time 30-00:00:00) on the hive login node (not locally), reports any planned maintenance window read live from Slurm with start/end, states the largest --time that finishes before the start, explains that '(ReqNodeNotAvail, Reserved for maintenance)' is expected rather than an error, and recommends a shorter --time or checkpoint/resubmit instead of cancel-and-retry.",
+      "prompt": "I want to submit a 30 day high-partition job on the cluster tomorrow. Anything I should know before I do? Last time my job just sat pending with a weird reason.",
+      "expected_output": "Runs scripts/maintenance.sh (e.g. --check-time 30-00:00:00) on the cluster login node (not locally), reports any planned maintenance window read live from Slurm with start/end, states the largest --time that finishes before the start, explains that '(ReqNodeNotAvail, Reserved for maintenance)' is expected rather than an error, and recommends a shorter --time or checkpoint/resubmit instead of cancel-and-retry.",
       "files": [],
       "expectations": [
         "Transcript runs maintenance.sh (or cluster-context.sh) on the cluster login node, not on the local machine",
