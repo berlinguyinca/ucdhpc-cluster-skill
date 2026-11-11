@@ -60,6 +60,7 @@ if [ -n "$t" ]; then
       12) warn "$mw" ;;
       13) info "$mw" ;;
       3)  info "maintenance window not checked: could not read Slurm reservations here" ;;
+      2)  info "maintenance window not checked: cannot parse --time $t" ;;
     esac
   else
     info "maintenance window not checked (maintenance.sh not found next to this script); run: maintenance.sh --check-time $t"

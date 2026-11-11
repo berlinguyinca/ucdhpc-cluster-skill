@@ -4,6 +4,8 @@
 # reservation` sample (no Slurm on CI). Fixtures: a real whole-cluster capture (one-line form, host names anonymized) plus
 # generic, non-UC-Davis samples (multi-line form, other names/flags/scopes, Unknown/(null) times).
 set -u
+# fixtures carry Pacific-time stamps and tests match the zone abbreviation: pin it (CI runners are UTC)
+export TZ=America/Los_Angeles
 HERE=$(cd "$(dirname "$0")" && pwd)
 S="$HERE/../ucd-hpc/scripts"; M="$S/maintenance.sh"; FX="$HERE/fixtures"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT

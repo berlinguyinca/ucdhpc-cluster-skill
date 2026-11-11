@@ -159,7 +159,7 @@ case $MODE in
     # Overlap with [start, end) for a job starting now: active window, or start falls before now+T.
     hit=""
     while IFS='|' read -r se _ name kind scope; do
-      if [ "$SECS" = INF ] || [ "$(( se - NOW ))" -lt "$SECS" ]; then hit="$se|$name|$kind|$scope"; [ "$kind" = cluster ] && break; fi
+      if [ "$SECS" = INF ] || [ "$(( se - NOW ))" -lt "$SECS" ]; then { [ -z "$hit" ] || [ "$kind" = cluster ]; } && hit="$se|$name|$kind|$scope"; [ "$kind" = cluster ] && break; fi
     done <<<"$LIVE"
     [ -z "$hit" ] && { echo "OK: --time=$CHECK finishes before the next maintenance window ($(fmt_time "$S_EP"))"; exit 0; }
     IFS='|' read -r se name kind scope <<<"$hit"
